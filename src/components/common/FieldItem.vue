@@ -11,33 +11,35 @@
                 <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
             </el-option>
         </el-select>
-        <el-input v-model="fieldData.data.null_value" placeholder="默认值" class="w2 mr10 wp"></el-input>
-        <el-input v-model="fieldData.data.boost" placeholder="加权" class="w5 mr10 wp" title="字段级别索引分数加权，浮点数值，默认1.0"></el-input>
-        <el-input v-if="fieldData.data.type=='scaled_float'" v-model="fieldData.data.scaling_factor" placeholder="比例因子" class="w2 mr10 wp"></el-input>
-        <el-input v-if="fieldData.data.type=='date'" v-model="fieldData.data.format" placeholder="格式" class="w3 mr10 wp"></el-input>
-        <el-select
-            v-model="fieldData.data.index"
-            class="w3 wp mr10"
-            clearable
-            title="默认 not_analyzed"
-            placeholder="索引状态">
-            <el-option v-for="(item, index) in indexStatus" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
-                <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
-            </el-option>
-        </el-select>
-        <el-select
-            v-if="fieldData.data.type=='string' || fieldData.data.type=='text' || fieldData.data.type=='keyword'"
-            v-model="fieldData.data.index_options"
-            class="w3 wp mr10"
-            clearable
-            :title="fieldData.data.index == undefined || fieldData.data.index ? '默认 positions' : '默认 docs'"
-            placeholder="索引选项">
-            <el-option v-for="(item, index) in indexOptions" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
-                <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
-            </el-option>
-        </el-select>
-        <el-checkbox v-model="fieldData.data.doc_values" label="排序聚合" class="mr8" title="支持排序和聚合"
-            :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
+        <span v-if="!fieldData.data.properties">
+            <el-input v-model="fieldData.data.null_value" placeholder="默认值" class="w2 mr10 wp"></el-input>
+            <el-input v-model="fieldData.data.boost" placeholder="加权" class="w5 mr10 wp" title="字段级别索引分数加权，浮点数值，默认1.0"></el-input>
+            <el-input v-if="fieldData.data.type=='scaled_float'" v-model="fieldData.data.scaling_factor" placeholder="比例因子" class="w2 mr10 wp"></el-input>
+            <el-input v-if="fieldData.data.type=='date'" v-model="fieldData.data.format" placeholder="格式" class="w3 mr10 wp"></el-input>
+            <el-select
+                v-model="fieldData.data.index"
+                class="w3 wp mr10"
+                clearable
+                title="默认 not_analyzed"
+                placeholder="索引状态">
+                <el-option v-for="(item, index) in indexStatus" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
+                    <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
+                </el-option>
+            </el-select>
+            <el-select
+                v-if="fieldData.data.type=='string' || fieldData.data.type=='text' || fieldData.data.type=='keyword'"
+                v-model="fieldData.data.index_options"
+                class="w3 wp mr10"
+                clearable
+                :title="fieldData.data.index == undefined || fieldData.data.index ? '默认 positions' : '默认 docs'"
+                placeholder="索引选项">
+                <el-option v-for="(item, index) in indexOptions" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
+                    <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
+                </el-option>
+            </el-select>
+            <el-checkbox v-model="fieldData.data.doc_values" label="排序聚合" class="mr8" title="支持排序和聚合"
+                :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
+        </span>
         <el-button v-if="!field.old" @click="doDeleteField()" icon="el-icon-close" size="mini" type="text"></el-button>
     </div>
 </template>

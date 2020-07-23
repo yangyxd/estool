@@ -2,7 +2,7 @@
     <div>
         <div v-if="fieldData.items != undefined && fieldData.items.length > 0">
             <div v-for="(field, index) in fieldData.items" :key="index">
-                <field-item :field="field" @onDelete="doDeleteItem"></field-item>
+                <field-item :field="field" @onDelete="doDeleteItem" :style="'margin-left:'+field.level*24+'px;'"></field-item>
             </div>
         </div>
         <el-button @click="doAddField()" icon="el-icon-plus"></el-button>

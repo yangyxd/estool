@@ -18,11 +18,11 @@
                     <el-form-item label="连接URL">
                         <el-input v-model="form.connection" maxlength="5000" placeholder="输入 ElasticSearch 服务器连接地址" class="handle-input mr10"></el-input>
                     </el-form-item>
-                    <el-form-item label="服务名称">
-                        <el-input v-model="form.name" readonly class="handle-input mr10 blue"></el-input>
-                    </el-form-item>
                     <el-form-item label="集群名称">
                         <el-input v-model="form.connName" readonly class="handle-input mr10 blue"></el-input>
+                    </el-form-item>
+                    <el-form-item label="主节点">
+                        <el-input v-model="form.name" readonly class="handle-input mr10 blue"></el-input>
                     </el-form-item>
                     <el-form-item label="集群ID">
                         <el-input v-model="form.cluster_uuid" readonly class="handle-input mr10 blue"></el-input>
@@ -97,17 +97,18 @@
 
         <!-- 类型映射弹出框 -->
         <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="65%">
-            <el-card shadow="never">
-                <el-form ref="mappings.mappings" :model="mappings.mappings" label-width="80px" label-position="left">
-                    <el-form-item label="动态映射:">
-                        <mapping-class :mapClass="mappings.mappings"></mapping-class>
-                    </el-form-item>
-                    <el-form-item label="属性:">
-                        <field :fieldData="mappings.mappings" @onAddChange="doAddMappingsField"></field>
-                    </el-form-item>
-                </el-form>
-            </el-card>
+            <el-container style="max-height: calc(100vh - 400px); "><el-main>
+            <el-form ref="mappings.mappings" :model="mappings.mappings" label-width="80px" label-position="left">
+                <el-form-item label="动态映射:">
+                    <mapping-class :mapClass="mappings.mappings"></mapping-class>
+                </el-form-item>
+                <el-form-item label="属性:">
+                    <field :fieldData="mappings.mappings" @onAddChange="doAddMappingsField"></field>
+                </el-form-item>
+            </el-form>
+            </el-main></el-container>
             <span slot="footer" class="dialog-footer">
+                <el-button @click="doSaveMappings(1)">查看请求语句</el-button>
                 <el-button @click="edtMappingsVisible = false">取 消</el-button>
                 <el-button type="primary" @click="doSaveMappings()">确 定</el-button>
             </span>
@@ -310,21 +311,26 @@
                     _item.dynamic = _src.dynamic;
                     _item.items = [];
                     console.log('2');
-                    if (_src.properties != undefined) {
-                        for (var _p in _src.properties) {
-                            if (!_p) continue;
-                            let _field = _src.properties[_p];
-                            _item.items.push({
-                                name: _p,
-                                old: true,
-                                data: _field,
-                            });
-                        }
-                    }
+                    this.initProperties(_item.items, 0, _src.properties);
                     this.mappings.mappings = _item;
                     console.log(JSON.stringify(this.mappings));
                     this.edtMappingsVisible = true;
                 }).catch(() => loading.close());
+            },
+            initProperties(items, level, properties) {
+                if (properties == undefined) return;
+                for (var _p in properties) {
+                    if (!_p) continue;
+                    let _field = properties[_p];
+                    items.push({
+                        name: _p,
+                        old: true,
+                        level: level,
+                        data: _field,
+                    });
+                    if (_field.properties)
+                        this.initProperties(items, level + 1, _field.properties);
+                }
             },
             doAddMappingsField(item, newField) {
                 if (item.items == undefined || item.items == null)
@@ -341,7 +347,38 @@
             //     delete this.mappings.mappings[key];
             //     this.$forceUpdate();
             // },
-            doSaveMappings() {
+            getMapItemPath(properties, si, item) {
+                if (item.level == 0) return {
+                    properties: properties,
+                    path: item.name
+                };
+                let _items = this.mappings.mappings.items;
+                let i = item.level;
+                let _si = si;
+                let map = [item.name];
+                while (i >= 0) {
+                    let j = _si;
+                    for (j; j > 0; j--) {
+                        if (_items[j].level < i) {
+                            map.push(_items[j].name);
+                            break;
+                        }
+                    }
+                    _si = j;
+                    i--;
+                }
+                let parent = properties;
+                let path = '';
+                for (var k = map.length - 1; k > 0; k--) {
+                    path = path + map[k] + '.';
+                    parent = parent[map[k]].properties;
+                }
+                return {
+                    properties: parent,
+                    path: path + item.name
+                }
+            },
+            doSaveMappings(flag) {
                 // 保存映射数据
                 let _item = {
                     properties: {}
@@ -351,13 +388,24 @@
                 if (item.dynamic != undefined)
                     _item.dynamic = item.dynamic;
                 if (item.items) {
-                    item.items.forEach((v)=> {
-                        if (v == undefined || !v.name || !v.data || !v.data.type) return;
-                        if (_fileds.indexOf(v.name) >= 0) {
-                            this.$message.error("属性名称【" + v.name + "】冲突");
+                    for (let i = 0; i < item.items.length; i++) {
+                        let v = item.items[i];
+                        if (v == undefined || !v.name || !v.data) return;
+                        let _path = this.getMapItemPath(_item.properties, i, v);
+
+                        if (_fileds.indexOf(_path.path) >= 0) {
+                            this.$message.error("属性名称【" + _path.path + "】冲突");
                             return;
                         }
-                        _fileds.push(v.name);
+                        _fileds.push(_path.path);
+
+                        if (v.data.properties) {
+                            _path.properties[v.name] = {
+                                "properties": {}
+                            };
+                            continue;
+                        }
+
                         let _field = {
                             type: v.data.type
                         };
@@ -368,8 +416,23 @@
                         if (v.data.index != undefined) _field.index = v.data.index;
                         if (v.data.index_options != undefined) _field.index_options = v.data.index_options;
                         if (v.data.doc_values != undefined) _field.doc_values = v.data.doc_values;
-                        _item.properties[v.name] = _field;
-                    });
+                        if (v.data.ignore_above != undefined) _field.ignore_above = v.data.ignore_above;
+                        if (v.data.ignore_malformed != undefined) _field.ignore_malformed = v.data.ignore_malformed;
+                        if (v.data.coerce != undefined) _field.coerce = v.data.coerce;
+                        if (v.data.fields != undefined) _field.fields = v.data.fields;
+
+                        _path.properties[v.name] = _field;
+                    }
+                }
+                let api = "/" + this.mappings.item.index + "/_mapping";
+
+                if (flag == 1) {
+                    this.$alert('<el-container style="max-height: calc(100vh - 400px); "><el-main>'+
+                        '<span><b>请求地址: </b><br>POST '+api+'</span><br><br><pre style="height: 60vh; overflow: scroll;">' + JSON.stringify(_item, null, 2) + '</pre></el-main></el-container>',
+                        '请求数据', {
+                        dangerouslyUseHTMLString: true
+                    }).then(() => {});
+                    return;
                 }
 
                 const loading = this.$loading({
@@ -378,7 +441,7 @@
                     spinner: 'el-icon-loading',
                     background: 'rgba(0, 0, 0, 0.7)'
                 });
-                this.$http.put("/" + this.mappings.item.index + "/_mapping", null, _item).then((resp) => {
+                this.$http.put(api, null, _item).then((resp) => {
                     loading.close();
                     console.log(resp);
                     this.edtMappingsVisible = false;
