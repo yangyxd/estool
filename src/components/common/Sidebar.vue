@@ -4,7 +4,7 @@
             class="sidebar-el-menu"
             :default-active="onRoutes"
             :collapse="collapse"
-            background-color="#324157"
+            background-color="#333333"
             text-color="#bfcbd9"
             active-text-color="#20a0ff"
             :unique-opened="false"

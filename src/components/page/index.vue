@@ -82,7 +82,7 @@
 
 
         <!-- 添加弹出框 -->
-        <el-dialog :visible.sync="edtAddDlgisible" :title="index.index + ' - ' + (form.editmode ? '编辑' : '添加') + '数据'"  width="68%">
+        <el-dialog :visible.sync="edtAddDlgisible" :title="index.index + ' - ' + (form.editmode ? '编辑' : '添加') + '数据'"  width="68%" :close-on-click-modal="false">
             <el-container style="max-height: calc(100vh - 400px); ">
                 <el-main>
                 <el-form ref="index.add" :model="form">
