@@ -74,7 +74,7 @@
 
 
         <!-- 添加弹出框 -->
-        <el-dialog :title="newform.edit ? '编辑索引' : '添加索引'" :visible.sync="addIndexVisible" :width="newform.edit ? '450px' : '80%'">
+        <el-dialog :title="newform.edit ? '编辑索引' : '添加索引'" :visible.sync="addIndexVisible" :width="newform.edit ? '450px' : '65%'">
             <el-form ref="newform" :model="newform" label-width="85px">
                 <el-form-item label="* 索引名称">
                     <el-input v-model="newform.name" maxlength="255" placeholder='输入索引名称（不超过255个字符）' :disabled="newform.edit" show-word-limit></el-input>
@@ -99,7 +99,7 @@
         </el-dialog>
 
         <!-- 类型映射弹出框 -->
-        <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="65%" :close-on-click-modal="false">
+        <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="75%" :close-on-click-modal="false">
             <el-container style="max-height: calc(100vh - 400px); "><el-main>
             <el-form ref="mappings.mappings" :model="mappings.mappings" label-width="75px" label-position="left">
                 <el-form-item label="动态映射:">
