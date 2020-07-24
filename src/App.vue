@@ -22,6 +22,8 @@ export default {
         loadSysConfig() {
             config.sSiteTitle = "ElasticSearch 管理系统";
             config.sServiceHost = localStorage.getItem("conn");
+            config.sUser = localStorage.getItem("user");
+            config.sPwd = localStorage.getItem("pwd");
             console.log(config.sServiceHost);
             this.$const.sSiteTitle = config.sSiteTitle;
             document.title = config.sSiteTitle;

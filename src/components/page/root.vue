@@ -18,6 +18,12 @@
                     <el-form-item label="连接URL">
                         <el-input v-model="form.connection" maxlength="5000" placeholder="输入 ElasticSearch 服务器连接地址" class="handle-input mr10"></el-input>
                     </el-form-item>
+                    <el-form-item label="用户名">
+                        <el-input v-model="form.user" maxlength="200" placeholder="输入 ElasticSearch 用户名" class="handle-input mr10"></el-input>
+                    </el-form-item>
+                    <el-form-item label="密码">
+                        <el-input v-model="form.pwd" maxlength="200" placeholder="输入 ElasticSearch 密码" class="handle-input mr10" show-password></el-input>
+                    </el-form-item>
                     <el-form-item label="集群名称">
                         <el-input v-model="form.connName" readonly class="handle-input mr10 blue"></el-input>
                     </el-form-item>
@@ -165,6 +171,8 @@
                 loading: false,
                 form: {
                     connection: config.sServiceHost,
+                    user: config.sUser,
+                    pwd: config.sPwd,
                     connName: undefined,
                 },
                 newform: {},
@@ -474,7 +482,11 @@
             onSubmit() {
                 if (!this.check()) return;
                 localStorage.setItem("conn", this.form.connection);
+                localStorage.setItem("user", this.form.user);
+                localStorage.setItem("pwd", this.form.pwd);
                 config.sServiceHost = this.form.connection;
+                config.sUser = this.form.user;
+                config.sPwd = this.form.pwd;
                 this.$http.updateBaseUrl();
                 this.doRefresh();
             },

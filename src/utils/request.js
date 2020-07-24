@@ -5,6 +5,7 @@ import {
     MessageBox
 } from 'element-ui';
 import router from '../router';
+let Base64 = require('js-base64').Base64;
 
 const service = axios.create({
     // process.env.NODE_ENV === 'development' 来判断是否开发环境
@@ -121,6 +122,17 @@ exSvr.interceptors.response.use(
 export default {
     updateBaseUrl() {
         service.defaults.baseURL = config.sServiceHost;
+        console.log('aaa');
+        if (config.sUser && config.sPwd) {
+            service.defaults.headers = {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': 'Basic ' + Base64.encode(config.sUser + ':' + config.sPwd),
+            }
+        } else {
+            service.defaults.headers = {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }
     },
 
     // http get
