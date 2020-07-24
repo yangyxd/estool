@@ -25,8 +25,9 @@
                     </el-select>
                     <el-input v-model="query.key" class="w4 mr10" placeholder="输入关键字"></el-input>
                     <el-button type="primary" @click="doQuery()">查询</el-button>
-                    <el-button @click="doQueryAll()">全部数据</el-button>
-                    <el-button @click="doClearAll()" type="danger" icon="el-icon-lx-delete" title="清空数据"></el-button>
+                    <el-button type="success" @click="doQueryAll()">全部数据</el-button>
+                    <el-button @click="doQuery(true, true)" type="danger" icon="el-icon-lx-delete" title="删除全部符合条件的数据">删除数据</el-button>
+                    <el-button @click="doClearAll()" type="danger" icon="el-icon-lx-delete">清空数据</el-button>
                     <el-checkbox v-model="query.expandedHeader" label="展开对象" class="mr8 ml8"></el-checkbox>
                 </div>
                 <el-table
@@ -188,7 +189,26 @@
                     }
                 }
             },
-            doQuery() {
+            doQuery(isDelete, confirm) {
+
+                if (isDelete) {
+                    if (!this.query.key) {
+                        this.$message.info("条件删除必须输入查询关键字");
+                        return;
+                    }
+                }
+
+                if (isDelete == true && confirm == true) {
+                    // 删除确认
+                    this.$confirm('是否确定删除此索引下所有符合当前查询条件的数据？', '条件删除数据', {
+                        type: 'warning',
+                        dangerouslyUseHTMLString: true
+                    }).then(() => {
+                        this.doQuery(true);
+                    }).catch(() => {});
+                    return;
+                }
+
                 let _cmd = {};
                 if (this.query.key) {
                     // 单个关键词
@@ -197,19 +217,19 @@
                         if (_field.length == 1) {
                             // 查询单个字段
                             _cmd.query = {"match": {}};
-                            _cmd.highlight = {"fields": {}};
+                            if (!isDelete) _cmd.highlight = {"fields": {}};
                             _cmd.query.match[_field[0]] = this.query.key;
-                            _cmd.highlight.fields[_field[0]] = {};
+                            if (!isDelete) _cmd.highlight.fields[_field[0]] = {};
                         } else {
                             // 查询多个字段
                             _cmd.query = {"multi_match": {
                                 "query": this.query.key,
                                 "fields": [],
                             }};
-                            _cmd.highlight = {"fields": {}};
+                            if (!isDelete) _cmd.highlight = {"fields": {}};
                             _field.forEach((_v) => {
                                 _cmd.query.multi_match.fields.push(_v);
-                                _cmd.highlight.fields[_v] = {};
+                                if (!isDelete) _cmd.highlight.fields[_v] = {};
                             });
                         }
                     } else {
@@ -221,19 +241,20 @@
                             "query": this.query.key,
                             "fields": [],
                         }};
-                        _cmd.highlight = {"fields": {}};
+                        if (!isDelete) _cmd.highlight = {"fields": {}};
                         this.fields.forEach((_field) => {
                             let _type = _field.data.type;
                             let _ok = (_type == "string" || _type == "text" || _type == "keyword" || _type == "date" || _type == "ip");
-                            if (!_ok && _isNumber)
+                            if (!_ok && !isDelete && _isNumber) {
                                 _ok = _type == "integer" || _type == "long" || _type == "short"
                                     || _type == "byte" || _type == "double" || _type == "float"
                                     || _type == "half_float" || _type == "scaled_float";
+                            }
                             if (!_ok && _isBool)
                                 _ok = _type == "boolean";
                             if (_ok) {
                                 _cmd.query.multi_match.fields.push(_field.name);
-                                _cmd.highlight.fields[_field.name] = {};
+                                if (!isDelete) _cmd.highlight.fields[_field.name] = {};
                             }
                         });
                     }
@@ -242,8 +263,13 @@
                         "match_all": {}
                     }
                 }
-                this.getData("/" + this.index.index + "/_search", _cmd);
+                if (isDelete == true) {
+                    this.getData("/" + this.index.index + "/_delete_by_query", _cmd, true);
+                } else {
+                    this.getData("/" + this.index.index + "/_search", _cmd);
+                }
             },
+            // 查询全部
             doQueryAll() {
                 this.getData("/" + this.index.index + "/_search", {
                     "query": {
@@ -251,16 +277,18 @@
                     },
                 });
             },
-            getData(api, cmd) {
+            getData(api, cmd, isDelete) {
                 let _cmd = cmd ? cmd : this.lastCommand;
                 let _api = api ? api : this.lastApi;
                 if (!_cmd || !_api) return;
 
-                let _page = this.query.pageindex < 1 ? 1 : this.query.pageindex;
-                let _pageSize = this.query.pagesize > 0 ? this.query.pagesize : 20;
-                _cmd.from = (_page - 1) * _pageSize;
-                _cmd.size = _pageSize;
-                this.lastCommand = _cmd;
+                if (!isDelete) {
+                    let _page = this.query.pageindex < 1 ? 1 : this.query.pageindex;
+                    let _pageSize = this.query.pagesize > 0 ? this.query.pagesize : 20;
+                    _cmd.from = (_page - 1) * _pageSize;
+                    _cmd.size = _pageSize;
+                    this.lastCommand = _cmd;
+                }
 
                 this.loading = true;
                 const loading = this.$loading({
@@ -270,9 +298,13 @@
                     background: 'rgba(0, 0, 0, 0.7)'
                 });
                 this.$http.post(_api, null, _cmd).then((resp) => {
-                    this.count = resp.hits.total.value;
-                    this.items = resp.hits.hits;
-                    this.updateHeader();
+                    if (isDelete == true) {
+                        this.$message.info(`成功删除了${resp.deleted}条数据`);
+                    } else {
+                        this.count = resp.hits.total.value;
+                        this.items = resp.hits.hits;
+                        this.updateHeader();
+                    }
                     this.loading = false;
                     loading.close();
                 }).catch(() => {
