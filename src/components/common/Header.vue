@@ -36,7 +36,7 @@ export default {
     data() {
         return {
             title: config.sSiteTitle,
-            collapse: false,
+            collapse: config.sCollapse,
             fullscreen: false,
             name: '...',
             message: 2

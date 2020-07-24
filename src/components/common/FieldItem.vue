@@ -13,7 +13,7 @@
             </el-option>
         </el-select>
 
-        <el-input v-if="!fieldData.data.properties"
+        <el-input v-if="!fieldData.data.properties && fieldData.data.type!='string' && fieldData.data.type!='text'"
             v-model="null_value" placeholder="默认值" @input="setNullValue" class="w2 mr10 wp"></el-input>
         <el-input v-if="!fieldData.data.properties"
             v-model="fieldData.data.boost" placeholder="加权" class="w5 mr10 wp"
@@ -63,9 +63,10 @@ export default {
                 data: {}
             },
             fieldTypes: [
-                {name: "字符串（ES 5.x开始不再支持）", value: "string"},
+                // {name: "字符串（ES 5.x开始不再支持）", value: "string"},
                 {name: "字符串（需要全文检索时使用）", value: "text"},
                 {name: "字符串（精确值搜索）", value: "keyword"},
+                {name: "布尔值（true 或 false）", value: "boolean"},
                 {name: "整数（32位有符号）", value: "integer"},
                 {name: "整数（64位有符号）", value: "long"},
                 {name: "整数（-32768~32767）", value: "short"},
@@ -74,7 +75,6 @@ export default {
                 {name: "浮点数（32位）", value: "float"},
                 {name: "浮点数（16位）", value: "half_float"},
                 {name: "浮点数（缩放类型）", value: "scaled_float"},
-                {name: "布尔值（true 或 false）", value: "boolean"},
                 {name: "日期类型", value: "date"},
                 {name: "范围类型", value: "range"},
                 {name: "二进制数据（默认只存储不索引）", value: "binary"},
@@ -133,7 +133,7 @@ export default {
         getNullValue() {
             let v = this.fieldData.data.null_value;
             if (v != undefined)
-                v = JSON.stringify(v);
+                v = v + '';
             return v;
         },
         setNullValue(v, t) {

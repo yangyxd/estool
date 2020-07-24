@@ -54,7 +54,7 @@ import bus from '../common/bus';
 export default {
     data() {
         return {
-            collapse: false,
+            collapse: config.sCollapse,
             items: [
                 {
                     icon: 'el-icon-lx-home',

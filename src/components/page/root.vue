@@ -27,6 +27,9 @@
                     <el-form-item label="集群ID">
                         <el-input v-model="form.cluster_uuid" readonly class="handle-input mr10 blue"></el-input>
                     </el-form-item>
+                    <el-form-item label="ES版本号">
+                        <el-input v-model="form.versionNumber" readonly class="handle-input mr10 blue"></el-input>
+                    </el-form-item>
                 </el-form>
                 <div style="display: inline-flex">
                     <h3><span style="margin-right: 20px">索引 ({{indexs.length}})</span></h3>
@@ -192,6 +195,7 @@
                     this.form.connName = resp.cluster_name;
                     this.form.name = resp.name;
                     this.form.cluster_uuid = resp.cluster_uuid;
+                    this.form.versionNumber = resp.version.number;
                     config.cluster_name = resp.cluster_name;
                     config.name = resp.name;
                     this.loading = false;

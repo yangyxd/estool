@@ -81,7 +81,7 @@
 
 
         <!-- 添加弹出框 -->
-        <el-dialog :visible.sync="edtAddDlgisible" :title="index.index + ' - 添加数据'"  width="68%">
+        <el-dialog :visible.sync="edtAddDlgisible" :title="index.index + ' - ' + (form.editmode ? '编辑' : '添加') + '数据'"  width="68%">
             <el-container style="max-height: calc(100vh - 400px); ">
                 <el-main>
                 <el-form ref="index.add" :model="form">
@@ -352,6 +352,7 @@
                     });
                     _data.id = src._id;
                     _data.closeDlg = true;
+                    _data.editmode = true;
                 }
                 this.form = _data;
                 this.edtAddDlgisible = true;
@@ -404,6 +405,7 @@
                     } else {
                         this.form.id = undefined;
                         this.form.src = undefined;
+                        this.form.editmode = undefined;
                         this.$message.info(_msg);
                     }
                 }).catch(() => loading.close());
