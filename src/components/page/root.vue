@@ -96,9 +96,9 @@
         </el-dialog>
 
         <!-- 类型映射弹出框 -->
-        <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="65%">
+        <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="65%" :close-on-click-modal="false">
             <el-container style="max-height: calc(100vh - 400px); "><el-main>
-            <el-form ref="mappings.mappings" :model="mappings.mappings" label-width="80px" label-position="left">
+            <el-form ref="mappings.mappings" :model="mappings.mappings" label-width="75px" label-position="left">
                 <el-form-item label="动态映射:">
                     <mapping-class :mapClass="mappings.mappings"></mapping-class>
                 </el-form-item>
@@ -106,6 +106,11 @@
                     <field :fieldData="mappings.mappings" @onAddChange="doAddMappingsField"></field>
                 </el-form-item>
             </el-form>
+            <div style="float: left; margin-bottom: 6px; text-align: left; font-size: 14px;">
+                <span class="grey">提示：<span class="red">建立映射后，字段名称和数据类型将无法修改！</span>
+                <br>尽量选择范围小的类型，提高搜索效率.
+                <br>日期格式可以是：yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis</span>
+            </div>
             </el-main></el-container>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="doSaveMappings(1)">查看请求语句</el-button>
@@ -150,7 +155,7 @@
     import field  from '../common/Field';
     import mappingClass  from '../common/MappingClass';
     export default {
-        name: 'main',
+        name: 'mainPage',
         components: { field, mappingClass },
         data() {
             return {
@@ -295,7 +300,7 @@
                     spinner: 'el-icon-loading',
                     background: 'rgba(0, 0, 0, 0.7)'
                 });
-                console.log('2');
+                console.log('1');
                 this.mappings = {
                     item: item,
                     index: item.index,
@@ -304,27 +309,29 @@
                     newClass: {}
                 };
                 this.$http.get("/" + item.index + "/_mappings").then(resp => {
-                    loading.close();
                     this.mappings.src = resp[item.index].mappings;
                     let _src = this.mappings.src;
                     let _item = {};
                     _item.dynamic = _src.dynamic;
                     _item.items = [];
                     console.log('2');
-                    this.initProperties(_item.items, 0, _src.properties);
+                    if (_src.properties)
+                        this.initProperties(_item.items, 0, _src.properties);
                     this.mappings.mappings = _item;
-                    console.log(JSON.stringify(this.mappings));
+                    console.log('3');
+                    // console.log(JSON.stringify(this.mappings));
+                    loading.close();
                     this.edtMappingsVisible = true;
                 }).catch(() => loading.close());
             },
             initProperties(items, level, properties) {
-                if (properties == undefined) return;
                 for (var _p in properties) {
                     if (!_p) continue;
                     let _field = properties[_p];
                     items.push({
                         name: _p,
                         old: true,
+                        id: this.uuid(),
                         level: level,
                         data: _field,
                     });
@@ -332,15 +339,21 @@
                         this.initProperties(items, level + 1, _field.properties);
                 }
             },
-            doAddMappingsField(item, newField) {
+            doAddMappingsField(item, newField, newIndex) {
                 if (item.items == undefined || item.items == null)
                     item.items = [];
-                item.items.push({
+                let _nexItem = {
                     name: newField.name,
-                    data: {
-
-                    }
-                });
+                    old: false,
+                    id: this.uuid(),
+                    level: newField.level == undefined ? 0 : newField.level,
+                    data: {}
+                };
+                if (newIndex == undefined || newIndex < 0) {
+                    item.items.push(_nexItem);
+                } else {
+                    item.items.splice(newIndex, 0, _nexItem);
+                }
             },
             // doDeleteMappingItem(key) {
             //     console.log("delete");
@@ -404,6 +417,12 @@
                                 "properties": {}
                             };
                             continue;
+                        } else {
+                            if (!v.data.type) {
+                                this.$message.error("属性【" + _path.path + "】未指定类型");
+                                return;
+                            }
+
                         }
 
                         let _field = {

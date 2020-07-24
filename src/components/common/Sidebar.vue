@@ -58,7 +58,7 @@ export default {
             items: [
                 {
                     icon: 'el-icon-lx-home',
-                    index: 'main',
+                    index: 'root',
                     title: '系统首页'
                 },
                 {

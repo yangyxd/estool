@@ -5,42 +5,51 @@
             v-model="fieldData.data.type"
             class="w4 wp mr10"
             clearable
-            :disabled="field.old"
+            @change="onDataTypeChange"
+            :disabled="field.old || fieldData.data.properties != undefined"
             placeholder="属性类型">
             <el-option v-for="(item, index) in fieldTypes" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
                 <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
             </el-option>
         </el-select>
-        <span v-if="!fieldData.data.properties">
-            <el-input v-model="fieldData.data.null_value" placeholder="默认值" class="w2 mr10 wp"></el-input>
-            <el-input v-model="fieldData.data.boost" placeholder="加权" class="w5 mr10 wp" title="字段级别索引分数加权，浮点数值，默认1.0"></el-input>
-            <el-input v-if="fieldData.data.type=='scaled_float'" v-model="fieldData.data.scaling_factor" placeholder="比例因子" class="w2 mr10 wp"></el-input>
-            <el-input v-if="fieldData.data.type=='date'" v-model="fieldData.data.format" placeholder="格式" class="w3 mr10 wp"></el-input>
-            <el-select
-                v-model="fieldData.data.index"
-                class="w3 wp mr10"
-                clearable
-                title="默认 not_analyzed"
-                placeholder="索引状态">
-                <el-option v-for="(item, index) in indexStatus" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
-                    <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
-                </el-option>
-            </el-select>
-            <el-select
-                v-if="fieldData.data.type=='string' || fieldData.data.type=='text' || fieldData.data.type=='keyword'"
-                v-model="fieldData.data.index_options"
-                class="w3 wp mr10"
-                clearable
-                :title="fieldData.data.index == undefined || fieldData.data.index ? '默认 positions' : '默认 docs'"
-                placeholder="索引选项">
-                <el-option v-for="(item, index) in indexOptions" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
-                    <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
-                </el-option>
-            </el-select>
-            <el-checkbox v-model="fieldData.data.doc_values" label="排序聚合" class="mr8" title="支持排序和聚合"
-                :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
-        </span>
-        <el-button v-if="!field.old" @click="doDeleteField()" icon="el-icon-close" size="mini" type="text"></el-button>
+
+        <el-input v-if="!fieldData.data.properties"
+            v-model="null_value" placeholder="默认值" @input="setNullValue" class="w2 mr10 wp"></el-input>
+        <el-input v-if="!fieldData.data.properties"
+            v-model="fieldData.data.boost" placeholder="加权" class="w5 mr10 wp"
+            title="字段级别索引分数加权，浮点数值，默认1.0"></el-input>
+        <el-input v-if="!fieldData.data.properties && fieldData.data.type=='scaled_float'"
+            v-model="fieldData.data.scaling_factor" placeholder="比例因子" class="w2 mr10 wp"></el-input>
+        <el-input v-if="!fieldData.data.properties && fieldData.data.type=='date'"
+            v-model="fieldData.data.format" placeholder="格式" class="w3 mr10 wp"></el-input>
+        <el-select
+            v-if="!fieldData.data.properties"
+            v-model="fieldData.data.index"
+            class="w3 wp mr10"
+            clearable
+            title="默认 not_analyzed"
+            placeholder="索引状态">
+            <el-option v-for="(item, index) in indexStatus" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
+                <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
+            </el-option>
+        </el-select>
+        <el-select
+            v-if="!fieldData.data.properties && (fieldData.data.type=='string' || fieldData.data.type=='text' || fieldData.data.type=='keyword')"
+            v-model="fieldData.data.index_options"
+            class="w3 wp mr10"
+            clearable
+            :title="fieldData.data.index == undefined || fieldData.data.index ? '默认 positions' : '默认 docs'"
+            placeholder="索引选项">
+            <el-option v-for="(item, index) in indexOptions" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
+                <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
+            </el-option>
+        </el-select>
+        <el-checkbox v-if="!fieldData.data.properties" v-model="fieldData.data.doc_values" label="排序聚合" class="mr8" title="支持排序和聚合"
+            :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
+
+        <el-button v-if="!fieldData.data.properties" @click="doViewCode()" icon="el-icon-setting" size="mini" type="text" title="查看或编辑代码"></el-button>
+        <el-button v-if="!field.old" @click="doDeleteField()" icon="el-icon-close" size="mini" type="text" title="删除属性"></el-button>
+        <el-button v-if="!field.old" @click="doAddField()" icon="el-icon-plus" size="mini" type="text" title="添加子属性"></el-button>
     </div>
 </template>
 
@@ -49,6 +58,7 @@ export default {
     name: "fieldItem",
     data() {
         return {
+            null_value: undefined,
             fieldData: {
                 data: {}
             },
@@ -103,10 +113,56 @@ export default {
     },
     mounted() {
         this.fieldData = this.field;
+        this.null_value = this.getNullValue();
     },
     methods: {
         doDeleteField() {
             this.$emit('onDelete', this.field);
+        },
+        doAddField() {
+            this.$emit('onAddChild', this.field);
+            this.$forceUpdate();
+        },
+        doViewCode() {
+            this.$emit('onShowCode', this.field);
+        },
+        onDataTypeChange(v) {
+            this.setNullValue(this.null_value, v);
+            this.null_value = this.getNullValue();
+        },
+        getNullValue() {
+            let v = this.fieldData.data.null_value;
+            if (v != undefined)
+                v = JSON.stringify(v);
+            return v;
+        },
+        setNullValue(v, t) {
+            // 设置默认值，这里需要作类型转换处理
+            let _v;
+            if (v != undefined && v !== '') {
+                let _t = t == undefined ? this.fieldData.data.type : t;
+                if (_t == "integer" || _t == "long" || _t == "short" || _t == "byte") {
+                    _v = parseInt(v);
+                    if (isNaN(_v)) _v = undefined;
+                } else if (_t == "double" || _t == "float" || _t == "half_float" || _t == "scaled_float") {
+                    _v = parseFloat(v);
+                    if (isNaN(_v)) _v = undefined;
+                } else if (_t == "boolean") {
+                    _v = (v == "true" || v == "yes" || v === true) ? true : false;
+                } else if (_t == "object" || _t == "array") {
+                    if (!v)
+                        _v = undefined;
+                    else {
+                        try {
+                            _v = JSON.parse(v);
+                        } catch(e) {
+                            _v = undefined;
+                        }
+                    }
+                } else
+                    _v = v;
+            }
+            this.fieldData.data.null_value = _v;
         }
     }
 };

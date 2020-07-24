@@ -16,7 +16,18 @@ plugin.install = function (Vue, options) {
           tempString += str[randomNum];
         }
         let date = new Date().getTime();
-        return "random" + tempString + date;
+        return tempString + date;
+      },
+
+      uuid() {
+        function S4() {
+          return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+        }
+        function STime() {
+          return ((new Date().getTime())|0).toString(16);
+        }
+        let tempString = S4()+S4()+S4()+S4()+S4()+S4()+S4()+STime();
+        return tempString;
       },
 
       // 对像拷贝

@@ -8,7 +8,7 @@ export default new Router({
     routes: [
         {
             path: '/',
-            redirect: '/main'
+            redirect: '/root'
         },
         {
             path: '/',
@@ -16,8 +16,8 @@ export default new Router({
             meta: { title: '首页' },
             children: [
                 {
-                    path: '/main',
-                    component: () => import(/* webpackChunkName: "main" */ '../components/page/main.vue'),
+                    path: '/root',
+                    component: () => import(/* webpackChunkName: "root" */ '../components/page/root.vue'),
                     meta: { title: '系统首页', fixed: true, icon: 'el-icon-lx-main' }
                 },
                 {
