@@ -37,6 +37,10 @@ service.interceptors.request.use(
         if (appId) {
             config.headers['appid'] = appId;
         }
+
+        if (config.sUser && config.sPwd) {
+            config.headers['Authorization'] = 'Basic ' + Base64.encode(config.sUser + ':' + config.sPwd);
+        }
         return config;
     },
     error => {
@@ -122,17 +126,6 @@ exSvr.interceptors.response.use(
 export default {
     updateBaseUrl() {
         service.defaults.baseURL = config.sServiceHost;
-        console.log('aaa');
-        if (config.sUser && config.sPwd) {
-            service.defaults.headers = {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Authorization': 'Basic ' + Base64.encode(config.sUser + ':' + config.sPwd),
-            }
-        } else {
-            service.defaults.headers = {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
-        }
     },
 
     // http get

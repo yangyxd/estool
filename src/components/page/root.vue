@@ -13,7 +13,7 @@
                 <div class="bill-top">
                     <el-button type="primary" @click="onSubmit">保存修改</el-button>
                     <el-button @click="onTest" :loading="loading">测试连接</el-button>
-                    <el-button @click="onHelp" :loading="loading">es常用配置</el-button>
+                    <el-button @click="onHelp">es常用配置</el-button>
                 </div>
                 <el-form ref="form" :model="form" label-width="85px" inline label-position="left" class="handle-box-form">
                     <el-form-item label="连接URL">
@@ -197,6 +197,7 @@
         },
         methods: {
             doRefresh() {
+                console.log('refresh');
                 if (!this.check()) return;
                 this.loading = true;
                 this.form.connName = undefined;
@@ -514,7 +515,12 @@
                     '# 设定自己为master\n'+
                     'node.master: true\n'+
                     '# 绑定的ip地址\n'+
-                    'network.host: 127.0.0.1';
+                    'network.host: 127.0.0.1\n'+
+                    '# 用户密码\n'+
+                    'http.cors.allow-headers: Authorization, content-type\n'+
+                    'xpack.security.enabled: true\n'+
+                    'xpack.security.transport.ssl.enabled: true\n'+
+                    '\n';
                 this.$alert('<el-container style="max-height: calc(100vh - 400px); "><el-main>'+
                     '<pre style="height: 60vh; overflow: scroll;">' + _data + '</pre></el-main></el-container>',
                     '请求数据', {
