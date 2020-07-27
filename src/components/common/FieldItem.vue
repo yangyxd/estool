@@ -89,9 +89,8 @@ export default {
                 {name: "抽取类型", value: "percolator"},
             ],
             indexStatus: [
-                {name: "无索引，不可查询", value: "no"},
-                {name: "原始值索引（默认）", value: "not_analyzed"},
-                {name: "分词索引", value: "analyzed"},
+                {name: "无索引，不可查询", value: "false"},
+                {name: "有索引（默认）", value: "true"},
             ],
             indexOptions: [
                 {name: "索引文档号", value: "docs"},

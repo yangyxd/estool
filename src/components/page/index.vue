@@ -243,6 +243,7 @@
                         }};
                         if (!isDelete) _cmd.highlight = {"fields": {}};
                         this.fields.forEach((_field) => {
+                            if (_field.data.index == false) return;
                             let _type = _field.data.type;
                             let _ok = (_type == "string" || _type == "text" || _type == "keyword" || _type == "date" || _type == "ip");
                             if (!_ok && !isDelete && _isNumber) {
