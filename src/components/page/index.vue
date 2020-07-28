@@ -415,7 +415,9 @@
 
                 if (flag == 1) {
                     this.$alert('<el-container style="max-height: calc(100vh - 400px); "><el-main>'+
-                        '<span><b>请求地址: </b><br>POST '+api+'</span><br><br><pre style="height: 60vh; overflow: scroll;">' + JSON.stringify(_data, null, 2) + '</pre></el-main></el-container>',
+                        '<pre style="height: 60vh; overflow: scroll;">' +
+                        (this.form.id ? '更新数据' : '插入数据') + '\n\n' +
+                        'POST ' + config.sServiceHost + api + "\n\n" + JSON.stringify(_data, null, 2) + '</pre></el-main></el-container>',
                         '请求数据', {
                         dangerouslyUseHTMLString: true
                     }).then(() => {});

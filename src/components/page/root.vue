@@ -17,7 +17,15 @@
                 </div>
                 <el-form ref="form" :model="form" label-width="85px" inline label-position="left" class="handle-box-form">
                     <el-form-item label="连接URL">
-                        <el-input v-model="form.connection" maxlength="5000" placeholder="输入 ElasticSearch 服务器连接地址" class="handle-input mr10"></el-input>
+                        <el-autocomplete v-model="form.connection"
+                            :fetch-suggestions="queryConnSearch"
+                            placeholder="输入 ElasticSearch 服务器连接地址"
+                            @select="handleConnSelect"
+                            class="handle-input mr10">
+                            <template slot-scope="props">
+                                <span>{{ props.item.conn }}</span>
+                            </template>
+                        </el-autocomplete>
                     </el-form-item>
                     <el-form-item label="用户名">
                         <el-input v-model="form.user" maxlength="200" placeholder="输入 ElasticSearch 用户名" class="handle-input mr10"></el-input>
@@ -176,6 +184,7 @@
                     pwd: config.sPwd,
                     connName: undefined,
                 },
+                his: [],
                 newform: {},
                 mappings: {
                     mappings: {}
@@ -192,10 +201,20 @@
                 edtAliasesVisible: false,
             }
         },
-        created() {
+        mounted() {
             this.doRefresh();
         },
         methods: {
+            queryConnSearch(queryString, cb) {
+                let his = this.onLoadHisConn();
+                cb(his ? his : []);
+            },
+            handleConnSelect(item) {
+                this.form.connection = item.conn;
+                this.form.user = item.user;
+                this.form.pwd = item.pwd;
+                this.onSubmit(undefined, false);
+            },
             doRefresh() {
                 console.log('refresh');
                 if (!this.check()) return;
@@ -481,11 +500,47 @@
                     this.$message.info("保存成功");
                 }).catch(() => loading.close());
             },
-            onSubmit() {
+            onLoadHisConn() {
+                let hisConns = [];
+                let _str = localStorage.getItem("histConn");
+                if (_str) {
+                    try {
+                        hisConns = JSON.parse(_str);
+                        if (!Array.isArray(hisConns)) {
+                            hisConns = [];
+                        }
+                    } catch(e) {}
+                }
+                return hisConns;
+            },
+            onSubmit(e, flag) {
                 if (!this.check()) return;
                 localStorage.setItem("conn", this.form.connection);
                 localStorage.setItem("user", this.form.user);
                 localStorage.setItem("pwd", this.form.pwd);
+
+                if (flag == undefined) {
+                    let his = this.onLoadHisConn();
+                    let item;
+                    his.forEach((v) => {
+                        if (v.conn == this.form.connection) {
+                            item = v;
+                        }
+                    });
+                    if (item) {
+                        item.conn = this.form.connection;
+                        item.user = this.form.user;
+                        item.pwd = this.form.pwd;
+                    } else {
+                        his.push({
+                            conn: this.form.connection,
+                            user: this.form.user,
+                            pwd: this.form.pwd,
+                        });
+                    }
+                    localStorage.setItem("histConn", JSON.stringify(his));
+                }
+
                 config.sServiceHost = this.form.connection;
                 config.sUser = this.form.user;
                 config.sPwd = this.form.pwd;
@@ -536,8 +591,10 @@
             },
             getIndexs() {
                 if (!this.check()) return;
+                this.indexs = [];
+                let _this = this;
                 this.$http.get("/_cat/indices?format=json").then(resp => {
-                    this.indexs = resp == null ? [] : resp;
+                    _this.indexs = resp == undefined ? [] : resp;
                 });
             },
             getHealthDesc(item) {
