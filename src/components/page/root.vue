@@ -465,7 +465,7 @@
                         if (v.data.boost != undefined) _field.boost = v.data.boost;
                         if (v.data.scaling_factor != undefined) _field.scaling_factor = v.data.scaling_factor;
                         if (v.data.format != undefined) _field.format = v.data.format;
-                        if (v.data.index != undefined) _field.index = v.data.index;
+                        if (v.data.index != undefined && v.data.index != '') _field.index = v.data.index;
                         if (v.data.index_options != undefined) _field.index_options = v.data.index_options;
                         if (v.data.doc_values != undefined) _field.doc_values = v.data.doc_values;
                         if (v.data.ignore_above != undefined) _field.ignore_above = v.data.ignore_above;

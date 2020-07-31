@@ -27,6 +27,7 @@
             v-model="fieldData.data.index"
             class="w3 wp mr10"
             clearable
+            @change="onIndexTypeChange"
             title="默认 not_analyzed"
             placeholder="索引状态">
             <el-option v-for="(item, index) in indexStatus" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
@@ -129,6 +130,12 @@ export default {
             this.setNullValue(this.null_value, v);
             this.null_value = this.getNullValue();
         },
+        onIndexTypeChange(v) {
+            if (v == undefined || v == '')
+                this.index = undefined;
+            else
+                this.index = v === "true" ? true : false;
+        },
         getNullValue() {
             let v = this.fieldData.data.null_value;
             if (v != undefined)
@@ -140,6 +147,7 @@ export default {
             let _v;
             if (v != undefined && v !== '') {
                 let _t = t == undefined ? this.fieldData.data.type : t;
+                print(_t);
                 if (_t == "integer" || _t == "long" || _t == "short" || _t == "byte") {
                     _v = parseInt(v);
                     if (isNaN(_v)) _v = undefined;
