@@ -11,7 +11,8 @@
         <div class="container">
             <div class="handle-box">
                 <div class="bill-top">
-                    <el-button @click="doAddData()" type="info" class="mr10">添加数据</el-button>
+                    <el-button @click="doAddData()" type="info" >添加数据</el-button>
+                    <el-button @click="doRefresh()" class="mr10" icon="el-icon-lx-refresh"></el-button>
                     <el-select
                         v-model="selectField"
                         class="wp mr10 w4"
@@ -90,10 +91,30 @@
                         <div style="margin-bottom: 4px"><span class="title red">ID</span></div>
                         <el-input v-model="form.id" placeholder="请输入自定义ID，留空则会自动生成"></el-input>
                     </div>
-                    <div v-for="(item, i) in fields" :key="i" style="margin-bottom: 8px">
-                        <div style="margin-bottom: 4px"><span class="title">{{item.name}}</span>
-                        <span class="desc"><span class="grey">数据类型：</span>{{item.data.type}}</span></div>
-                        <el-input v-model="form.data[item.name]" placeholder="请输入值"></el-input>
+                    <div v-for="(item, i) in form.fields" :key="i" style="margin-bottom: 8px">
+                        <div :style="'margin-bottom: 4px; margin-left:'+item.level*24+'px;'"><span class="title">
+                                {{getItemName(item)}}
+                            </span>
+                            <span class="desc mr10" v-if="!item.data.properties"><span class="grey">数据类型：</span>{{item.data.type}}</span>
+                            <el-checkbox v-if="item.data.properties" :key="uuid()" v-model="form.arrays[item.name]" label="数组"
+                                @change="changeItemArrayState(item)"
+                                class="ml10"
+                                title="将这个字段的值作为一个数组"></el-checkbox>
+                            <el-input-number v-if="item.data.properties && form.arrays[item.name]"
+                                class="ml8"
+                                title="数组下标"
+                                :step='1'
+                                @change="(v) => changeItemArrayIndex(item, v)"
+                                v-model="item.curItemIndex" :min="0"
+                                :max="item.count"></el-input-number>
+                        </div>
+                        <div v-if="!item.data.properties" :style="'margin-left:'+item.level*24+'px'">
+                            <el-input v-model="form.data[getItemName(item)]" placeholder="请输入值" clearable>
+                                <template slot="append">
+                                    <el-checkbox :key="uuid()" v-model="form.arrays[item.name]" label="数组" title="将这个字段的值作为一个数组"></el-checkbox>
+                                </template>
+                            </el-input>
+                        </div>
                     </div>
                 </el-form>
             </el-main></el-container>
@@ -125,7 +146,7 @@
                     pagesize: 100,
                     expandedHeader: false,
                 },
-                form: {data: {}},
+                form: {data: {}, arrays: {}},
                 index: {},
                 items: [],
                 header: [],
@@ -149,6 +170,9 @@
             this.loadFileds();
         },
         methods: {
+            doRefresh() {
+                this.loadFileds();
+            },
             getColumnText(row, highlight, key) {
                 if (highlight && highlight[key]) {
                     return highlight[key][0];
@@ -171,20 +195,35 @@
                     let _fields = [];
                     this.initProperties(_fields, undefined, _src.properties);
                     this.fields = _fields;
+                    this.src = _src;
                     this.updateHeader();
                 });
             },
-            initProperties(fields, key, properties) {
+            initProperties(fields, key, properties, ex, level, parent) {
                 if (!properties) return;
                 for (var _key in properties) {
                     if (!_key) continue;
                     let _data = properties[_key];
                     if (_data.properties) {
-                        this.initProperties(fields, key ? key + '.' + _key : _key, _data.properties);
+                        let _parent;
+                        if (ex == true) {
+                            _parent = {
+                                name: key ? key + '.' + _key : _key,
+                                key: _key,
+                                data: _data,
+                                level: level,
+                                parent: parent,
+                            };
+                            fields.push(_parent);
+                        }
+                        this.initProperties(fields, key ? key + '.' + _key : _key, _data.properties, ex, level + 1, _parent);
                     } else {
                         fields.push({
                             name: key ? key + '.' + _key : _key,
-                            data: _data
+                            key: _key,
+                            data: _data,
+                            level: level,
+                            parent: parent
                         })
                     }
                 }
@@ -378,39 +417,137 @@
             },
             // 添加
             doAddData(src) {
-                let _data = {data: {}, src: src, closeDlg: false};
+                let _data = {data: {}, arrays: {}, fields: [], src: src, closeDlg: false};
+                this.initProperties(_data.fields, undefined, this.src.properties, true, 0);
                 if (src != null) {
-                    this.fields.forEach((_v) => {
+                    _data.fields.forEach((_v) => {
                         _data.data[_v.name] = this.getColumnText(src._source, undefined, _v.name);
                     });
                     _data.id = src._id;
                     _data.closeDlg = true;
                     _data.editmode = true;
+                } else {
+                    _data.fields.forEach((_v) => {
+                        _data.data[_v.name] = _v.data.null_value;
+                    });
                 }
                 this.form = _data;
                 this.edtAddDlgisible = true;
+            },
+            changeItemArrayState(item) {
+                if (this.form.arrays[item.name] == true) {
+                    this.form.data[item.name] = [];
+                    item.curItemIndex = 0;
+                    item.count = 1;
+                } else {
+                    this.form.data[item.name] = undefined;
+                    item.curItemIndex = undefined;
+                    item.count = 0;
+                }
+            },
+            changeItemArrayIndex(item, value) {
+                if (value + 1 >= item.count)
+                    item.count = item.count + 1;
+                this.$forceUpdate();
+            },
+            getItemName(item) {
+                if (!item.parent) return item.name;
+                let i = item.name.lastIndexOf('.');
+                if (i > 0) {
+                    if (this.form.arrays[item.parent.name] == true)
+                        return this.getItemName(item.parent) + '[' + item.parent.curItemIndex + ']' + item.name.substr(i);
+                    else
+                        return this.getItemName(item.parent) + item.name.substr(i);
+                } else
+                    return item.name;
+            },
+            // 处理数据
+            parseValue(item, value) {
+                if (!value) return undefined;
+                let data = item.data;
+                if (!data || !data.type) return value;
+                let type = data.type;
+                let array = this.form.arrays[item.name];
+                if (type == 'object') {
+                    return JSON.parse(value);
+                } else if (array == true) {
+                    let _tmp = JSON.parse(value);
+                    if (Array.isArray(_tmp))
+                        return _tmp;
+                    throw new Error(`"${value} 不是一个数组`);
+                }
+                return value;
+            },
+            findField(name) {
+                for (let i = 0; i < this.form.fields.length; i++) {
+                    let item = this.form.fields[i];
+                    if (item && item.name == name) {
+                        return item;
+                    }
+                }
+                return undefined;
+            },
+            setItemData(_data, _pKey, item) {
+                let _key;
+                let _value;
+                if (item.data.properties) {
+                    if (this.form.arrays[item.name] == true && item.count != undefined && item.count > 0) {
+                        _data[item.key] = [];
+                        for (let i=0; i < item.count; i++) {
+                            let _ak = _pKey + item.key + '[' + i + ']';
+                            let _newItem = {};
+                            for (var __key in item.data.properties) {
+                                if (!__key) continue;
+                                let _field = this.findField(item.name + "." + __key);
+                                if (!_field) continue;
+                                this.setItemData(_newItem, _ak + '.', _field);
+                            }
+                            if (Object.keys(_newItem).length > 0) {
+                                _data[item.key].push(_newItem);
+                            }
+                        }
+                    } else {
+                        let _newItem2 = {};
+                        for (var __key in item.data.properties) {
+                            if (!__key) continue;
+                            let _field2 = this.findField(item.name + "." + __key);
+                            if (!_field2) continue;
+                            this.setItemData(_newItem2, _pKey + item.key + "." , _field2);
+                        }
+                        if (Object.keys(_newItem2).length > 0) {
+                            _data[item.key] = _newItem2;
+                        }
+                    }
+                } else {
+                    _key = _pKey + item.key;
+                    _value = this.form.data[_key];
+                    if (_value == undefined) return;
+                    this.__key = _key;
+                    this.__value = _value;
+                    _data[item.key] = this.parseValue(item, _value);
+                }
             },
             // 插入数据
             doInsertData(flag) {
                 let api = "/" + this.index.index + "/_doc/" + (this.form.id ? this.form.id : '');
 
                 let _data = {};
-                for (var _key in this.form.data) {
-                    if (!_key) continue;
-                    let _value = this.form.data[_key];
-                    let _keys = _key.split('.');
-                    if (_keys.length == 1)
-                        _data[_key] = _value;
-                    else {
-                        let _sub = _data;
-                        for (let j = 0; j < _keys.length - 1; j++) {
-                            let _v = _keys[j];
-                            if (_sub[_v] == undefined)
-                                _sub[_v] = {};
-                            _sub = _sub[_v];
-                        }
-                        _sub[_keys[_keys.length - 1]] = _value;
+                this.__key = undefined;
+                this.__value = undefined;
+                try {
+                    console.log('make data');
+                    for (let i = 0; i < this.form.fields.length; i++) {
+                        let item = this.form.fields[i];
+                        if (!item || item.level != 0) continue;
+                        this.setItemData(_data, '', item);
                     }
+                } catch(e) {
+                    this.$message({
+                        type: "error",
+                        dangerouslyUseHTMLString: true,
+                        message: `解析字段 <b>${this.__key}</b> 的值时发生异常:<br><br>${this.__value}<br><br><b>异常描述:</b> ` + e
+                    });
+                    return;
                 }
 
                 if (flag == 1) {
@@ -498,6 +635,9 @@ h3 {
 }
 .ml8{
     margin-left: 8px;
+}
+.ml10{
+    margin-left: 10px;
 }
 .mr10 {
     margin-right: 10px;

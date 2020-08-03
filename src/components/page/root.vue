@@ -404,7 +404,7 @@
                 let map = [item.name];
                 while (i >= 0) {
                     let j = _si;
-                    for (j; j > 0; j--) {
+                    for (j; j >= 0; j--) {
                         if (_items[j].level < i) {
                             map.push(_items[j].name);
                             break;
@@ -447,8 +447,10 @@
 
                         if (v.data.properties) {
                             _path.properties[v.name] = {
+                                "dynamic": undefined,
                                 "properties": {}
                             };
+                            if (v.data.dynamic != undefined && v.data.dynamic != '') _path.properties[v.name].dynamic = v.data.dynamic;
                             continue;
                         } else {
                             if (!v.data.type) {

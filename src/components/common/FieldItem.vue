@@ -13,6 +13,7 @@
             </el-option>
         </el-select>
 
+        <mapping-class v-if="fieldData.data.properties" :mapClass="fieldData.data"></mapping-class>
         <el-input v-if="!fieldData.data.properties && fieldData.data.type!='string' && fieldData.data.type!='text'"
             v-model="null_value" placeholder="默认值" @input="setNullValue" class="w2 mr10 wp"></el-input>
         <el-input v-if="!fieldData.data.properties"
@@ -48,15 +49,17 @@
         <el-checkbox v-if="!fieldData.data.properties" v-model="fieldData.data.doc_values" label="排序聚合" class="mr8" title="支持排序和聚合"
             :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
 
-        <el-button v-if="!fieldData.data.properties" @click="doViewCode()" icon="el-icon-setting" size="mini" type="text" title="查看或编辑代码"></el-button>
+        <el-button @click="doViewCode()" icon="el-icon-setting" size="mini" type="text" title="查看或编辑代码"></el-button>
         <el-button v-if="!field.old" @click="doDeleteField()" icon="el-icon-close" size="mini" type="text" title="删除属性"></el-button>
-        <el-button v-if="!field.old" @click="doAddField()" icon="el-icon-plus" size="mini" type="text" title="添加子属性"></el-button>
+        <el-button v-if="!field.old || fieldData.data.properties" @click="doAddField()" icon="el-icon-plus" size="mini" type="text" title="添加子属性"></el-button>
     </div>
 </template>
 
 <script>
+import mappingClass  from './MappingClass';
 export default {
     name: "fieldItem",
+    components: { mappingClass },
     data() {
         return {
             null_value: undefined,
@@ -79,7 +82,7 @@ export default {
                 {name: "日期类型", value: "date"},
                 {name: "范围类型", value: "range"},
                 {name: "二进制数据（默认只存储不索引）", value: "binary"},
-                {name: "数组型", value: "array"},
+                // {name: "数组型", value: "array"},
                 {name: "JSON对象", value: "object"},
                 {name: "嵌套类", value: "nested"},
                 {name: "地理坐标", value: "geo_point"},
@@ -147,7 +150,7 @@ export default {
             let _v;
             if (v != undefined && v !== '') {
                 let _t = t == undefined ? this.fieldData.data.type : t;
-                print(_t);
+                // print(_t);
                 if (_t == "integer" || _t == "long" || _t == "short" || _t == "byte") {
                     _v = parseInt(v);
                     if (isNaN(_v)) _v = undefined;

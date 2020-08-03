@@ -2,7 +2,8 @@
     <el-select
         v-model="cls.dynamic"
         class="w3 wp mr10"
-        placeholder="点击选择">
+        clearable
+        :placeholder="placeholder">
         <el-option v-for="(item, index) in dynamicTypes" :key="index" :label="`${item.value}`" :value="item.value">
             <span>{{item.name}}</span>
         </el-option>
@@ -27,6 +28,10 @@ export default {
             type: Object,
             required: true
         },
+        placeholder: {
+            type: String,
+            default: "点击选择"
+        }
     },
     created() {
 
