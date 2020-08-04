@@ -276,7 +276,9 @@
                     } else {
                         // 查询所有字段，但要区分，如查key是数字，则查所有，不是数字，只查非数字字段
                         let _isNumber = !isNaN(parseInt(this.query.key));
+                        let _isFloat = !isNaN(parseFloat(this.query.key));
                         let _isBool = Boolean(this.query.key).toString() == this.query.key;
+                        let _isDate = this.isDate(this.query.key) || this.isDateTime(this.query.key);
 
                         _cmd.query = {"multi_match": {
                             "query": this.query.key,
@@ -286,11 +288,15 @@
                         this.fields.forEach((_field) => {
                             if (_field.data.index == false) return;
                             let _type = _field.data.type;
-                            let _ok = (_type == "string" || _type == "text" || _type == "keyword" || _type == "date" || _type == "ip");
+                            let _ok = (_type == "string" || _type == "text" || _type == "keyword"); //  || _type == "ip"
                             if (!_ok && !isDelete && _isNumber) {
-                                _ok = _type == "integer" || _type == "long" || _type == "short"
-                                    || _type == "byte" || _type == "double" || _type == "float"
-                                    || _type == "half_float" || _type == "scaled_float";
+                                _ok = _type == "integer" || _type == "long" || _type == "short" || _type == "byte";
+                            }
+                            if (!_ok && !isDelete && _isFloat) {
+                                _ok = _type == "double" || _type == "float" || _type == "half_float" || _type == "scaled_float";
+                            }
+                            if (!_ok && _isDate) {
+                                _ok = _type == "date";
                             }
                             if (!_ok && _isBool)
                                 _ok = _type == "boolean";
@@ -468,7 +474,7 @@
                     }
                 } else {
                     let _key = _pKey + item.key;
-                    _data.data[_key] = row;
+                    _data.data[_key] = row instanceof Object ? JSON.stringify(row) : row;
                 }
             },
             // 添加

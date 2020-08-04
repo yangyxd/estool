@@ -274,6 +274,26 @@ plugin.install = function (Vue, options) {
         }
       },
 
+      isDate: function(str) {
+        var result = str.match(/^(\d{1,4})(-|\/)(\d{1,2})\2(\d{1,2})$/);
+        if (result == null) return false;
+        var d = new Date(result[1], result[3] - 1, result[4]);
+        return (d.getFullYear() == result[1] && d.getMonth() + 1 == result[3] && d.getDate() == result[4]);
+      },
+      isDateTime: function (str) {//日期格式：yyyy-mm-dd hh:mm:ss
+        var result = str.match(/^(\d{4})(-|\/)(\d{1,2})\2(\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+        if (result == null) return false;
+        var d = new Date(result[1], result[3] - 1, result[4], result[5], result[6], result[7]);
+        return (d.getFullYear() == result[1] && (d.getMonth() + 1) == result[3] && d.getDate() == result[4] && d.getHours() == result[5] && d.getMinutes() == result[6] && d.getSeconds() == result[7]);
+      },
+      isTime: function (str) {
+        var a = str.match(/^(\d{1,2})(:)?(\d{1,2})\2(\d{1,2})$/);
+        if (a == null) { return false; }
+        if (a[1] >= 24 || a[3] >= 60 || a[4] >= 60) {
+            return false
+        }
+        return true;
+      },
       /**方法功能：
        * 给数据进行添 0 操作
        * 参数：
