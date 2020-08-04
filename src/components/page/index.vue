@@ -12,6 +12,7 @@
             <div class="handle-box">
                 <div class="bill-top">
                     <el-button @click="doAddData()" type="info" >添加数据</el-button>
+                    <el-button @click="doQueryID()" title="将搜索关键字作为文档ID来查询">ID查询</el-button>
                     <el-button @click="doRefresh()" class="mr10" icon="el-icon-lx-refresh"></el-button>
                     <el-select
                         v-model="selectField"
@@ -26,9 +27,9 @@
                     </el-select>
                     <el-input v-model="query.key" class="w4 mr10" placeholder="输入关键字"></el-input>
                     <el-button type="primary" @click="doQuery()">查询</el-button>
-                    <el-button type="success" @click="doQueryAll()">全部数据</el-button>
+                    <el-button type="success" @click="doQueryAll()" class="mr10">全部数据</el-button>
                     <el-button @click="doQuery(true, true)" type="danger" icon="el-icon-lx-delete" title="删除全部符合条件的数据">删除数据</el-button>
-                    <el-button @click="doClearAll()" type="danger" icon="el-icon-lx-delete">清空数据</el-button>
+                    <el-button @click="doClearAll()" type="danger" icon="el-icon-lx-delete" class="mr10">清空数据</el-button>
                     <el-checkbox v-model="query.expandedHeader" label="展开对象" class="mr8 ml8"></el-checkbox>
                 </div>
                 <el-table
@@ -71,7 +72,7 @@
                         background
                         layout="total, sizes, prev, pager, next, jumper"
                         :current-page="query.pageindex"
-                        :page-sizes="[10, 20, 50, 100, 200]"
+                        :page-sizes="[1, 10, 20, 50, 100, 200, 500]"
                         :page-size="query.pagesize"
                         :total="count"
                         @size-change="handleSizeChange"
@@ -93,7 +94,7 @@
                     </div>
                     <div v-for="(item, i) in form.fields" :key="i" style="margin-bottom: 8px">
                         <div :style="'margin-bottom: 4px; margin-left:'+item.level*24+'px;'"><span class="title">
-                                {{getItemName(item)}}
+                                {{getItemName(item, true)}}
                             </span>
                             <span class="desc mr10" v-if="!item.data.properties"><span class="grey">数据类型：</span>{{item.data.type}}</span>
                             <el-checkbox v-if="item.data.properties" :key="uuid()" v-model="form.arrays[item.name]" label="数组"
@@ -101,12 +102,13 @@
                                 class="ml10"
                                 title="将这个字段的值作为一个数组"></el-checkbox>
                             <el-input-number v-if="item.data.properties && form.arrays[item.name]"
-                                class="ml8"
+                                class="ml8 mr10"
                                 title="数组下标"
                                 :step='1'
                                 @change="(v) => changeItemArrayIndex(item, v)"
                                 v-model="item.curItemIndex" :min="0"
-                                :max="item.count"></el-input-number>
+                                :max="getItemCount(item)"></el-input-number>
+                            <span v-if="item.data.properties && form.arrays[item.name]">共{{getItemCount(item)}}项</span>
                         </div>
                         <div v-if="!item.data.properties" :style="'margin-left:'+item.level*24+'px'">
                             <el-input v-model="form.data[getItemName(item)]" placeholder="请输入值" clearable>
@@ -309,6 +311,29 @@
                     this.getData("/" + this.index.index + "/_search", _cmd);
                 }
             },
+            // ID 查询
+            doQueryID() {
+                if (!this.query.key) {
+                    this.$message.info("请输入查询关键字");
+                    return;
+                }
+                const loading = this.$loading({
+                    lock: true,
+                    text: 'Loading',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
+                this.$http.get("/" + this.index.index + "/_doc/" + this.query.key).then((resp) => {
+                    this.count = 1;
+                    this.items = [resp];
+                    this.updateHeader();
+                    this.loading = false;
+                    loading.close();
+                }).catch(() => {
+                    this.loading = false;
+                    loading.close();
+                });
+            },
             // 查询全部
             doQueryAll() {
                 this.getData("/" + this.index.index + "/_search", {
@@ -370,7 +395,7 @@
                     }
                 });
                 this.header = header;
-                console.log(this.header);
+                // console.log(this.header);
             },
             labelHead(h,{column,index}) {
                 //动态表头渲染
@@ -415,13 +440,45 @@
                     });
                 }).catch(() => {});
             },
+            initFormData(row, _data, item, _pKey) {
+                if (!row) return;
+                if (item.data.properties) {
+                    if (Array.isArray(row)) {
+                        item.curItemIndex = 0;
+                        let ___count = row.length;
+                        if (___count < 1) ___count = 1;
+                        _data.data[_pKey + item.key + '.count'] = ___count;
+                        _data.arrays[item.name] = true;
+                        for (let i=0; i < row.length; i++) {
+                            let _ak = _pKey + item.key + '[' + i + ']';
+                            for (var __key in item.data.properties) {
+                                if (!__key) continue;
+                                let _field = this.findField(item.name + "." + __key, _data.fields);
+                                if (!_field) continue;
+                                this.initFormData(row[i][_field.key], _data, _field, _ak + '.');
+                            }
+                        }
+                    } else {
+                        for (var __key in item.data.properties) {
+                            if (!__key) continue;
+                            let _field2 = this.findField(item.name + "." + __key, _data.fields);
+                            if (!_field2) continue;
+                            this.initFormData(row[_field2.key], _data, _field2, _pKey + item.key + ".");
+                        }
+                    }
+                } else {
+                    let _key = _pKey + item.key;
+                    _data.data[_key] = row;
+                }
+            },
             // 添加
             doAddData(src) {
                 let _data = {data: {}, arrays: {}, fields: [], src: src, closeDlg: false};
                 this.initProperties(_data.fields, undefined, this.src.properties, true, 0);
                 if (src != null) {
                     _data.fields.forEach((_v) => {
-                        _data.data[_v.name] = this.getColumnText(src._source, undefined, _v.name);
+                        if (!_v || _v.level != 0) return;
+                        this.initFormData(src._source[_v.name], _data, _v, '');
                     });
                     _data.id = src._id;
                     _data.closeDlg = true;
@@ -438,28 +495,46 @@
                 if (this.form.arrays[item.name] == true) {
                     this.form.data[item.name] = [];
                     item.curItemIndex = 0;
-                    item.count = 1;
+                    setItemCount(item, 1);
                 } else {
                     this.form.data[item.name] = undefined;
                     item.curItemIndex = undefined;
-                    item.count = 0;
+                    setItemCount(item, undefined);
                 }
             },
             changeItemArrayIndex(item, value) {
-                if (value + 1 >= item.count)
-                    item.count = item.count + 1;
+                let _key = this.getItemCountKey(item);
+                let _count = this.form.data[_key];
+                if (_count == undefined || _count == null)
+                    _count = 1;
+                if (value >= _count) {
+                    _count++;
+                    this.form.data[_key] = _count;
+                }
                 this.$forceUpdate();
             },
-            getItemName(item) {
+            getItemName(item, flag) {
                 if (!item.parent) return item.name;
                 let i = item.name.lastIndexOf('.');
                 if (i > 0) {
                     if (this.form.arrays[item.parent.name] == true)
-                        return this.getItemName(item.parent) + '[' + item.parent.curItemIndex + ']' + item.name.substr(i);
+                        return (flag == true ? '' : this.getItemName(item.parent)) + '[' + item.parent.curItemIndex + ']' + item.name.substr(i);
                     else
-                        return this.getItemName(item.parent) + item.name.substr(i);
+                        return (flag == true ? '' : this.getItemName(item.parent)) + item.name.substr(i);
                 } else
                     return item.name;
+            },
+            getItemCount(item) {
+                let count = this.form.data[this.getItemCountKey(item)];
+                if (count == undefined || count == null)
+                    count = 1;
+                return count;
+            },
+            setItemCount(item, value) {
+                this.form.data[this.getItemCountKey(item)] = value;
+            },
+            getItemCountKey(item) {
+                return this.getItemName(item) + '.count';
             },
             // 处理数据
             parseValue(item, value) {
@@ -478,9 +553,9 @@
                 }
                 return value;
             },
-            findField(name) {
-                for (let i = 0; i < this.form.fields.length; i++) {
-                    let item = this.form.fields[i];
+            findField(name, fields) {
+                for (let i = 0; i < fields.length; i++) {
+                    let item = fields[i];
                     if (item && item.name == name) {
                         return item;
                     }
@@ -491,14 +566,15 @@
                 let _key;
                 let _value;
                 if (item.data.properties) {
-                    if (this.form.arrays[item.name] == true && item.count != undefined && item.count > 0) {
+                    let count = this.getItemCount(item);
+                    if (this.form.arrays[item.name] == true && count != undefined && count > 0) {
                         _data[item.key] = [];
-                        for (let i=0; i < item.count; i++) {
+                        for (let i=0; i < count; i++) {
                             let _ak = _pKey + item.key + '[' + i + ']';
                             let _newItem = {};
                             for (var __key in item.data.properties) {
                                 if (!__key) continue;
-                                let _field = this.findField(item.name + "." + __key);
+                                let _field = this.findField(item.name + "." + __key, this.form.fields);
                                 if (!_field) continue;
                                 this.setItemData(_newItem, _ak + '.', _field);
                             }
@@ -510,7 +586,7 @@
                         let _newItem2 = {};
                         for (var __key in item.data.properties) {
                             if (!__key) continue;
-                            let _field2 = this.findField(item.name + "." + __key);
+                            let _field2 = this.findField(item.name + "." + __key, this.form.fields);
                             if (!_field2) continue;
                             this.setItemData(_newItem2, _pKey + item.key + "." , _field2);
                         }
