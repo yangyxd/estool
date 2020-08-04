@@ -25,7 +25,7 @@
                             <span>{{item.name}}</span><span class="desc">{{item.data.type}}</span>
                         </el-option>
                     </el-select>
-                    <el-input v-model="query.key" class="w4 mr10" placeholder="输入关键字"></el-input>
+                    <el-input v-model="query.key" class="w4 mr10" placeholder="输入关键字" clearable></el-input>
                     <el-button type="primary" @click="doQuery()">查询</el-button>
                     <el-button type="success" @click="doQueryAll()" class="mr10">全部数据</el-button>
                     <el-button @click="doQuery(true, true)" type="danger" icon="el-icon-lx-delete" title="删除全部符合条件的数据">删除数据</el-button>
