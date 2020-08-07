@@ -3,6 +3,27 @@
 基于 Vue + Element UI 的 ElasticSearch 管理系统。
 Elasticsearch management tool based on Vue + element.
 
+## 为什么会有它？
+
+首先这是本人学习es和vue的一个沉淀， 其次是没看到好用的可视化索引类型映射管理和数据文档CURD工具。
+
+还有没有其它原因？我想想，我也不知道，我是谁？我在干什么？
+
+## 主要功能
+
+* 多ES服务一键切换
+* 支持ES安全认证
+* 支持跨域配置 （vue.config.js 文件中修改 module.exports 下 devServer 配置）
+* 创建索引
+* 修改索引副本数
+* 删除索引
+* 别名管理
+* 可视化类型映射管理(mapping)
+* 基础查询
+* 可视化添加数据
+* 删除数据
+* 清空数据
+
 ## 安装步骤
 
 ```angular2
