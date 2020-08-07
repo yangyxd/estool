@@ -26,7 +26,7 @@ module.exports = {
     // 在这里配置代理服务（解决跨域问题）
     devServer: {
         // 服务器会将任何未知请求代理到这个地址
-        // 注意：请将这个地址同样设置给 request.js 中的 proxyBaseUrl
+        // 注意：请将这个地址同样设置给 config.js 中的 sProxyBaseUrl
         proxy: 'https://es-c2f345l7.public.tencentelasticsearch.com:9200'
     }
 }

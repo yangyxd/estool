@@ -202,6 +202,7 @@
             }
         },
         mounted() {
+            console.log('root mounted.');
             this.doRefresh();
         },
         methods: {

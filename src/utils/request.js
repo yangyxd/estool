@@ -6,9 +6,7 @@ import {
 } from 'element-ui';
 import router from '../router';
 let Base64 = require('js-base64').Base64;
-
-/// 跨域代理设置（配合 vue.config.js 中的 devServer)
-let proxyBaseUrl = "https://es-c2f345l7.public.tencentelasticsearch.com:9200";
+const _config = config;
 
 const service = axios.create({
     // process.env.NODE_ENV === 'development' 来判断是否开发环境
@@ -41,8 +39,8 @@ service.interceptors.request.use(
             config.headers['appid'] = appId;
         }
 
-        if (config.sUser && config.sPwd) {
-            config.headers['Authorization'] = 'Basic ' + Base64.encode(config.sUser + ':' + config.sPwd);
+        if (_config.sUser && _config.sPwd) {
+            config.headers['Authorization'] = 'Basic ' + Base64.encode(_config.sUser + ':' + _config.sPwd);
         }
         return config;
     },
@@ -128,7 +126,7 @@ exSvr.interceptors.response.use(
 
 export default {
     updateBaseUrl() {
-        service.defaults.baseURL = config.sServiceHost == proxyBaseUrl ? '' : config.sServiceHost;
+        service.defaults.baseURL = config.sServiceHost == config.sProxyBaseUrl ? '' : config.sServiceHost;
     },
 
     // http get

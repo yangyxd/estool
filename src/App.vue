@@ -20,6 +20,7 @@ export default {
     },
     methods: {
         loadSysConfig() {
+            // console.log(JSON.stringify(config));
             config.sSiteTitle = "ElasticSearch 管理系统";
             config.sServiceHost = localStorage.getItem("conn");
             config.sUser = localStorage.getItem("user");
@@ -28,6 +29,8 @@ export default {
             this.$const.sSiteTitle = config.sSiteTitle;
             document.title = config.sSiteTitle;
             this.$http.updateBaseUrl();
+            console.log('loadSysConfig ok.');
+            console.log('user: ' + config.sUser + ', pwd: ' + config.sPwd);
             this.$http.get(config.sServiceHost).then(resp => {
                 config.cluster_name = resp.cluster_name;
                 config.name = resp.name;
