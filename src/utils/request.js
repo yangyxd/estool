@@ -126,7 +126,7 @@ exSvr.interceptors.response.use(
 
 export default {
     updateBaseUrl() {
-        service.defaults.baseURL = config.sServiceHost == config.sProxyBaseUrl ? '' : config.sServiceHost;
+        service.defaults.baseURL = _config.sServiceHost == _config.sProxyBaseUrl ? '' : _config.sServiceHost;
     },
 
     // http get
