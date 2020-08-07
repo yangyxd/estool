@@ -542,22 +542,42 @@
             getItemCountKey(item) {
                 return this.getItemName(item) + '.count';
             },
+            parseValueByType(type, value, array) {
+                if (type == 'object') {
+                    return JSON.parse(value);
+                } else if (array == true) {
+                    let _tmp = JSON.parse(value);
+                    if (Array.isArray(_tmp)) {
+                        for (let i=0; i<_tmp.length; i++) {
+                            _tmp[i] = this.parseValueByType(type, _tmp[i]);
+                        }
+                        return _tmp;
+                    }
+                    throw new Error(`"${value} 不是一个数组`);
+                } else if (type == "integer" || type == "long" || type == "short" || type == "byte") {
+                    let _tmp = parseInt(value);
+                    if (isNaN(_tmp))
+                        throw new Error(`"${value} 不是一个整数`);
+                    return _tmp;
+                } else if (type == "double" || type == "float" || type == "half_float" || type == "scaled_float") {
+                    let _tmp = parseFloat(value);
+                    if (isNaN(_tmp))
+                        throw new Error(`"${value} 不是一个浮点数`);
+                    return _tmp;
+                } else if (type == "boolean") {
+                    if (value == "true" || value == "yes" || value == "1") return true;
+                    if (value == "false" || value == "no" || value == "0") return false;
+                    throw new Error(`"${value} 不是一个布尔值`);
+                }
+                return value;
+            },
             // 处理数据
             parseValue(item, value) {
                 if (!value) return undefined;
                 let data = item.data;
                 if (!data || !data.type) return value;
-                let type = data.type;
                 let array = this.form.arrays[item.name];
-                if (type == 'object') {
-                    return JSON.parse(value);
-                } else if (array == true) {
-                    let _tmp = JSON.parse(value);
-                    if (Array.isArray(_tmp))
-                        return _tmp;
-                    throw new Error(`"${value} 不是一个数组`);
-                }
-                return value;
+                return this.parseValueByType(data.type, value, array);
             },
             findField(name, fields) {
                 for (let i = 0; i < fields.length; i++) {
@@ -798,6 +818,14 @@ h3 {
 
 .handle-dlg-box-form .realTimeWeight label {
     width: 80px;
+}
+
+.handle-box .el-button {
+    margin-bottom: 2px;
+}
+
+.handle-box .el-input {
+    margin-bottom: 2px;
 }
 
 .realTimeWeight input {

@@ -17,8 +17,8 @@ export default {
         return {
             cls: {},
             dynamicTypes: [
-                {name: "true (默认值，动态添加字段)", value: "true"},
-                {name: "false (忽略新字段)", value: "false"},
+                {name: "true (默认值，动态添加字段)", value: true},
+                {name: "false (忽略新字段)", value: false},
                 {name: "strict (陌生字段抛出异常)", value: "strict"},
             ],
         };
@@ -38,6 +38,10 @@ export default {
     },
     mounted() {
         this.cls = this.mapClass;
+        if (this.cls.dynamic == "true")
+            this.cls.dynamic = true
+        else if (this.cls.dynamic == "false")
+            this.cls.dynamic = false;
     },
     computed: {
 

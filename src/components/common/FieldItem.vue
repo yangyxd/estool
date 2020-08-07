@@ -93,8 +93,8 @@ export default {
                 {name: "抽取类型", value: "percolator"},
             ],
             indexStatus: [
-                {name: "无索引，不可查询", value: "false"},
-                {name: "有索引（默认）", value: "true"},
+                {name: "无索引，不可查询", value: false},
+                {name: "有索引（默认）", value: true},
             ],
             indexOptions: [
                 {name: "索引文档号", value: "docs"},
