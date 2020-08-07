@@ -9,6 +9,8 @@ Elasticsearch management tool based on Vue + element.
 
 还有没有其它原因？我想想，我也不知道，我是谁？我在干什么？
 
+[开始使用](https://yangyxd.github.io/estool/dist/index.html)
+
 ## 主要功能
 
 * 多ES服务一键切换
