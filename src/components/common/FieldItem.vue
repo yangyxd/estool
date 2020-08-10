@@ -7,6 +7,7 @@
             clearable
             @change="onDataTypeChange"
             :disabled="field.old || fieldData.data.properties != undefined"
+            title="属性类型"
             placeholder="属性类型">
             <el-option v-for="(item, index) in fieldTypes" :key="'_opt_' + index" :label="`${item.value}`" :value="item.value">
                 <span>{{item.value}}</span><span class="select-desc">{{item.name}}</span>
@@ -20,8 +21,9 @@
             v-model="fieldData.data.boost" placeholder="加权" class="w5 mr10 wp"
             title="字段级别索引分数加权，浮点数值，默认1.0"></el-input>
         <el-input v-if="!fieldData.data.properties && fieldData.data.type=='scaled_float'"
+            :disabled="field.old" title="比例因子"
             v-model="fieldData.data.scaling_factor" placeholder="比例因子" class="w2 mr10 wp"></el-input>
-        <el-input v-if="!fieldData.data.properties && fieldData.data.type=='date'"
+        <el-input v-if="!fieldData.data.properties && fieldData.data.type=='date'" clearable
             v-model="fieldData.data.format" placeholder="格式" class="w3 mr10 wp"></el-input>
         <el-select
             v-if="!fieldData.data.properties"
@@ -47,7 +49,7 @@
             </el-option>
         </el-select>
         <el-checkbox v-if="!fieldData.data.properties" v-model="fieldData.data.doc_values" label="排序聚合" class="mr8" title="支持排序和聚合"
-            :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
+            :disabled="field.old" :checked="fieldData.data.doc_values == undefined || fieldData.data.doc_values"></el-checkbox>
 
         <el-button @click="doViewCode()" icon="el-icon-setting" size="mini" type="text" title="查看或编辑代码"></el-button>
         <el-button v-if="!field.old" @click="doDeleteField()" icon="el-icon-close" size="mini" type="text" title="删除属性"></el-button>
@@ -132,6 +134,12 @@ export default {
         onDataTypeChange(v) {
             this.setNullValue(this.null_value, v);
             this.null_value = this.getNullValue();
+            if (v != 'date') {
+                delete this.fieldData.data['format'];
+            }
+            if (v != 'scaled_float') {
+                delete this.fieldData.data['scaling_factor'];
+            }
         },
         onIndexTypeChange(v) {
             if (v == undefined || v == '')

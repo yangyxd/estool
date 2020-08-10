@@ -114,7 +114,7 @@
         </el-dialog>
 
         <!-- 类型映射弹出框 -->
-        <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="75%" :close-on-click-modal="false">
+        <el-dialog :visible.sync="edtMappingsVisible" :title="mappings.index + ' - 字段映射 (mapping)'"  width="86%" :close-on-click-modal="false">
             <el-container style="max-height: calc(100vh - 400px); "><el-main>
             <el-form ref="mappings.mappings" :model="mappings.mappings" label-width="75px" label-position="left">
                 <el-form-item label="动态映射:">
@@ -437,7 +437,7 @@
                 if (item.items) {
                     for (let i = 0; i < item.items.length; i++) {
                         let v = item.items[i];
-                        if (v == undefined || !v.name || !v.data) return;
+                        if (v == undefined || !v.name || !v.data) continue;
                         let _path = this.getMapItemPath(_item.properties, i, v);
 
                         if (_fileds.indexOf(_path.path) >= 0) {
@@ -465,16 +465,24 @@
                             type: v.data.type
                         };
                         if (v.data.null_value != undefined) _field.null_value = v.data.null_value;
-                        if (v.data.boost != undefined) _field.boost = v.data.boost;
-                        if (v.data.scaling_factor != undefined) _field.scaling_factor = v.data.scaling_factor;
-                        if (v.data.format != undefined) _field.format = v.data.format;
+                        if (v.data.boost != undefined && v.data.boost != '') _field.boost = v.data.boost;
+                        if (v.data.scaling_factor != undefined && v.data.scaling_factor != '') {
+                            _field.scaling_factor = parseFloat(v.data.scaling_factor);
+                            if (isNaN(_field.scaling_factor)) {
+                                this.$message.error("属性【" + _path.path + "】的比例因子不是有效的浮点数");
+                                return;
+                            }
+                        }
+                        if (v.data.format != undefined && v.data.format != '') _field.format = v.data.format;
                         if (v.data.index != undefined && v.data.index != '') _field.index = v.data.index;
-                        if (v.data.index_options != undefined) _field.index_options = v.data.index_options;
-                        if (v.data.doc_values != undefined) _field.doc_values = v.data.doc_values;
-                        if (v.data.ignore_above != undefined) _field.ignore_above = v.data.ignore_above;
-                        if (v.data.ignore_malformed != undefined) _field.ignore_malformed = v.data.ignore_malformed;
-                        if (v.data.coerce != undefined) _field.coerce = v.data.coerce;
+                        if (v.data.index_options != undefined && v.data.index_options != '') _field.index_options = v.data.index_options;
+                        if (v.data.doc_values != undefined && v.data.doc_values != '') _field.doc_values = v.data.doc_values;
+                        if (v.data.ignore_above != undefined && v.data.ignore_above != '') _field.ignore_above = v.data.ignore_above;
+                        if (v.data.ignore_malformed != undefined && v.data.ignore_malformed != '') _field.ignore_malformed = v.data.ignore_malformed;
+                        if (v.data.coerce != undefined && v.data.coerce != '') _field.coerce = v.data.coerce;
                         if (v.data.fields != undefined) _field.fields = v.data.fields;
+                        if (v.data.description != undefined && v.data.description != '')
+                            _field.description = v.data.description;
 
                         _path.properties[v.name] = _field;
                     }
