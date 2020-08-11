@@ -8,5 +8,5 @@ var config = {
     // sServiceHost: "http://119.29.180.121:9800",
 
     // 跨域代理设置（配合 vue.config.js 中的 devServer)
-    sProxyBaseUrl: ""
+    sProxyBaseUrl: "https://es-c2f345l7.public.tencentelasticsearch.com:9200"
 };
