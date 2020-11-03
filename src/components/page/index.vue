@@ -359,6 +359,7 @@
                     _cmd.from = (_page - 1) * _pageSize;
                     _cmd.size = _pageSize;
                     this.lastCommand = _cmd;
+                    this.lastApi = _api;
                 }
 
                 this.loading = true;
