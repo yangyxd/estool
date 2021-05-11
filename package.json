@@ -11,7 +11,7 @@
     "axios": "^0.18.0",
     "babel-polyfill": "^6.26.0",
     "element-ui": "^2.11.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "miment": "^0.0.9",
     "vue": "^2.6.10",
     "vue-cropperjs": "^3.0.0",
