@@ -24,8 +24,8 @@
     "http-proxy-middleware": "^1.0.5"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.9.0",
-    "@vue/cli-service": "^3.9.0",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
     "vue-template-compiler": "^2.6.10",
     "webpack-bundle-analyzer": "^3.6.0",
     "compression-webpack-plugin": "^3.0.0",
